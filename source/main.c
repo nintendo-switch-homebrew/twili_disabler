@@ -4,8 +4,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include <switch.h>
+
+#define BUFF_SIZE 1024
 
 void	printHeader(void)
 {
@@ -104,22 +107,41 @@ void	enableTwili()
 
 }
 
+bool	copyFile(const char *src, const char *dest)
+{
+	int		fd_src = 0;
+	int		fd_dest = 0;
+	ssize_t	ret = 0;
+	char	buff[BUFF_SIZE] = {0};
+
+	fd_src = open(src, O_RDONLY);
+	if (fd_src == -1) {
+		return (false);
+	}
+
+	fd_dest = open(dest, O_RDWR | O_TRUNC | O_CREAT, 0600);
+	if (fd_dest == -1) {
+		close(fd_src);
+		return (false);
+	}
+
+	while ((ret = read(fd_src, &buff, BUFF_SIZE)) > 0) {
+		write(fd_dest, buff, ret);
+	}
+
+	close(fd_src);
+	close(fd_dest);
+
+	return (true);
+}
+
 void	disableTwili()
 {
-	// if do not have stock_hbl, abort
-	if (isFileExist("sdmc:/switch/twili_disabler/stock_hbl.nsp") == false) {
-		warningMessage("Error : Please put stock_hbl.nsp in /switch/twili_disabler");
-		return ;
-	}
+	// remove boot2.flag
+	remove("sdmc:/atmosphere/titles/0100000000006480/flags/boot2.flag");
 
-	// backup boot2.flag
-	if (isFileExist("sdmc:/atmosphere/titles/0100000000006480/flags/boot2.flag") == true) {
-		if (rename("sdmc:/atmosphere/titles/0100000000006480/flags/boot2.flag",
-				"sdmc:/switch/twili_disabler/boot2.flag") == -1) {
-			perror("rename()");
-		}
-	}
 
+	// TODO : erase twili_hbl with stock hbl
 	// save twili_hbl.nsp
 	if (isFileExist("sdmc:/switch/twili_disabler/twili_hbl.nsp") == true) {
 		remove("sdmc:/atmosphere/hbl.nsp");
@@ -132,8 +154,9 @@ void	disableTwili()
 
 }
 
-bool	checkNeededFile()
+void	checkNeededFile(void)
 {
+	u64		kDown = 0;
 	bool	err = false;
 	char	*files[] = {
 		"sdmc:/switch/twili_disabler",
@@ -145,26 +168,18 @@ bool	checkNeededFile()
 
 	printf("Check requiered files :\n\n");
 
+	// Check all files
 	for (int i = 0; files[i]; i++) {
 		if (isFileExist(files[i]) == false) {
-			printf("%s [%sKO%s]\n", files[i], CONSOLE_RED, CONSOLE_RESET);
+			printf("[%sKO%s] %s\n", CONSOLE_RED, CONSOLE_RESET, files[i]);
 			err = true;
 		} else {
-			printf("%s [%sOK%s]\n", files[i], CONSOLE_GREEN, CONSOLE_RESET);
+			printf("[%sOK%s] %s\n", CONSOLE_GREEN, CONSOLE_RESET, files[i]);
 		}
 	}
 
-	return (err);
-}
-
-int main(void)
-{
-	u64	kDown = 0;
-
-	consoleInit(NULL);
-
-	// Check if file are here
-	if (checkNeededFile() == true) {
+	// If one of file is missing, print error
+	if (err == true) {
 		while (1) {
 		hidScanInput();
 			kDown = hidKeysDown(CONTROLLER_P1_AUTO);
@@ -174,11 +189,21 @@ int main(void)
 
 			if (kDown & KEY_PLUS) {
 				consoleExit(NULL);
-				return (-1);
+				exit (-1);
 			}
 			consoleUpdate(NULL);
 		}
 	}
+}
+
+int main(void)
+{
+	u64	kDown = 0;
+
+	consoleInit(NULL);
+
+	// Check if file are here
+	checkNeededFile();
 
 	while (appletMainLoop()) {
 		consoleClear();
