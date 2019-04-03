@@ -14,7 +14,7 @@ void	printHeader(void)
 {
 	printf("\x1b[0;0H");
 	printf("================================================================================");
-	printf("%s%47s%s", CONSOLE_YELLOW, "Twili Disabler\n", CONSOLE_RESET);
+	printf("%s%55s%s", CONSOLE_YELLOW, "Twili Disabler (By SegFault42)\n", CONSOLE_RESET);
 	printf("================================================================================");
 }
 
@@ -213,6 +213,8 @@ int main(void)
 			}
 		}
 
+		printf("\x1b[50;66H");
+		printf("Press + to %sExit%s", CONSOLE_RED, CONSOLE_RESET);
 		if (kDown & KEY_PLUS)
 			break;
 
