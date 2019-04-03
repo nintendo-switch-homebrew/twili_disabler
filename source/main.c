@@ -51,63 +51,31 @@ void	drawButton(char *string, char *color)
 void	warningMessage(char *str)
 {
 	int	align = 0;
+	u64	kDown = 0;
 
 	// align to vertical center
 	if (strlen(str) < 80) {
 		align = 40 - (strlen(str) / 2);
 	}
 
-	consoleClear();
-	printHeader();
+	while (1) {
+		hidScanInput();
+		kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
-	printf("\x1b[25;%dH", align);
+		printf("\x1b[25;%dH", align);
 
-	printf("%s%s%s", CONSOLE_RED, str, CONSOLE_RESET);
+		printf("%s%s%s", CONSOLE_RED, str, CONSOLE_RESET);
 
-	consoleUpdate(NULL);
+		printf("\x1b[27;32HPush + to exit !");
 
-	sleep(3);
-}
-
-void	enableTwili()
-{
-	/*// Save stock_hbl.nsp*/
-	/*if (rename("sdmc:/atmosphere/hbl.nsp", "sdmc:/atmosphere/stock_hbl.nsp") == -1) {*/
-		/*perror("rename");*/
-		/*return ;*/
-	/*}*/
-
-	/*// install twili hbl*/
-	/*if (isFileExist("sdmc:/atmosphere/twili_hbl.nsp") == true) {*/
-		;/*if (rename("sdmc:/atmosphere/twili_hbl.nsp", "sdmc:/atmosphere/hbl.nsp") == -1) {*/
-			/*perror("rename");*/
-			/*return ;*/
-		/*}*/
-	/*} else {*/
-		/*if (rename("romfs:/twili_hbl.nsp", "sdmc:/atmosphere/hbl.nsp") == -1) {*/
-			/*perror("rename");*/
-			/*return ;*/
-		/*}*/
-	/*}*/
-
-	// Rename disable_boot2.flag in boot2.flag
-	if (isFileExist("sdmc:/switch/twili_disabler/boot2.flag") == true) {
-		rename("sdmc:/switch/twili_disabler/boot2.flag",
-				"sdmc:/atmosphere/titles/0100000000006480/flags/boot2.flag");
+		if (kDown & KEY_PLUS) {
+			break ;
+		}
+		consoleUpdate(NULL);
 	}
-	
-	/*if (isFileExist("sdmc:/switch/twili_disabler/a") == true) {*/
-		/*if (remove("sdmc:/switch/twili_disabler/b") == -1) {*/
-			/*perror("remove");*/
-		/*} else if (rename("sdmc:/switch/twili_disabler/a",*/
-				/*"sdmc:/switch/twili_disabler/b") == -1) {*/
-			/*perror("rename");*/
-		/*}*/
-	/*}*/
-
 }
 
-bool	copyFile(const char *src, const char *dest)
+bool	copyFile(const char *dest, const char *src)
 {
 	int		fd_src = 0;
 	int		fd_dest = 0;
@@ -135,23 +103,34 @@ bool	copyFile(const char *src, const char *dest)
 	return (true);
 }
 
-void	disableTwili()
+bool	enableTwili(void)
 {
+	if (copyFile("sdmc:/atmosphere/hbl.nsp", "sdmc:/switch/twili_disabler/twili_hbl.nsp") == false) {
+		warningMessage("Copy of (twili) hbl.nsp failed");
+		return (false);
+	}
+
+	if (copyFile("sdmc:/atmosphere/titles/0100000000006480/flags/boot2.flag", "sdmc:/switch/twili_disabler/boot2.flag") == false) {
+		warningMessage("Copy of boot2.flag failed");
+		return (false);
+	}
+
+	return (true);
+}
+
+
+bool	disableTwili(void)
+{
+	// install stock hbl
+	if (copyFile( "sdmc:/atmosphere/hbl.nsp", "sdmc:/switch/twili_disabler/stock_hbl.nsp") == false) {
+		warningMessage("Copy of (stock) hbl.nsp failed");
+		return (false);
+	}
+
 	// remove boot2.flag
 	remove("sdmc:/atmosphere/titles/0100000000006480/flags/boot2.flag");
 
-
-	// TODO : erase twili_hbl with stock hbl
-	// save twili_hbl.nsp
-	if (isFileExist("sdmc:/switch/twili_disabler/twili_hbl.nsp") == true) {
-		remove("sdmc:/atmosphere/hbl.nsp");
-	} else {
-		rename("sdmc:/atmosphere/hbl.nsp", "sdmc:/switch/twili_disabler/twili_hbl.nsp");
-	}
-
-	// Install stock_hbl
-	rename("sdmc:/switch/twili_disabler/stock_hbl.nsp", "sdmc:/atmosphere/hbl.nsp");
-
+	return (true);
 }
 
 void	checkNeededFile(void)
@@ -218,7 +197,9 @@ int main(void)
 			printf("Press A to %sDisable%s Twili", CONSOLE_RED, CONSOLE_RESET);
 
 			if (kDown & KEY_A) {
-				disableTwili();
+				if (disableTwili() == false) {
+					break ;
+				}
 			}
 		} else {
 			drawButton("Twili Disabled !", CONSOLE_RED);
@@ -226,7 +207,9 @@ int main(void)
 			printf("Press A to %sEnable%s Twili", CONSOLE_GREEN, CONSOLE_RESET);
 
 			if (kDown & KEY_A) {
-				enableTwili();
+				if (enableTwili() == false) {
+					break ;
+				}
 			}
 		}
 
