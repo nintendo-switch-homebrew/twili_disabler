@@ -9,7 +9,8 @@
 
 #include <switch.h>
 
-#define BUFF_SIZE 1024
+#define BUFF_SIZE (1024 * 16)
+
 typedef void (*ptrProgressBar)(double, double);
 
 void	printHeader(void)
@@ -108,7 +109,6 @@ void	progressBar(double TotalToDownload, double NowDownloaded)
 	return ;
 }
 
-// TODO: get file size with fstat
 bool	copyFile(const char *dest, const char *src, ptrProgressBar progress)
 {
 	int		fd_src = 0;
