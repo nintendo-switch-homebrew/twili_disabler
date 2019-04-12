@@ -153,8 +153,8 @@ int main(void)
 
 		if (getTwiliState() == true) {
 			drawButton("Twili Enabled !", CONSOLE_GREEN);
-			printf("\x1b[50;0H");
-			printf("Press A to %sDisable%s Twili", CONSOLE_RED, CONSOLE_RESET);
+			printf("\x1b[43;0H");
+			printf("Press A to %sDisable%s Twili\n", CONSOLE_RED, CONSOLE_RESET);
 
 			if (kDown & KEY_A) {
 				if (disableTwili() == false) {
@@ -163,8 +163,8 @@ int main(void)
 			}
 		} else {
 			drawButton("Twili Disabled !", CONSOLE_RED);
-			printf("\x1b[50;0H");
-			printf("Press A to %sEnable%s Twili", CONSOLE_GREEN, CONSOLE_RESET);
+			printf("\x1b[43;0H");
+			printf("Press A to %sEnable%s Twili\n", CONSOLE_GREEN, CONSOLE_RESET);
 
 			if (kDown & KEY_A) {
 				if (enableTwili() == false) {
@@ -173,8 +173,11 @@ int main(void)
 			}
 		}
 
-		printf("\x1b[50;66H");
-		printf("Press + to %sExit%s", CONSOLE_RED, CONSOLE_RESET);
+		/*printf("\x1b[49;0H");*/
+		printf("Press + to %sExit%s\n", CONSOLE_RED, CONSOLE_RESET);
+		/*printf("\x1b[50;0H");*/
+		printf("Press - to %sReboot%s (Need to reboot after enable/dsable twili)", CONSOLE_RED, CONSOLE_RESET);
+
 		if (kDown & KEY_PLUS) {
 			break;
 		}
