@@ -182,7 +182,7 @@ int main(void)
 			break;
 		}
 		if (kDown & KEY_MINUS) {
-			reboottopayload("hekate_ctcaer_4.9.1.bin");
+			reboottopayload("/atmosphere/reboot_payload.bin");
 		}
 
 		consoleUpdate(NULL);
